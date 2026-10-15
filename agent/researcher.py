@@ -86,8 +86,9 @@ def research_top_jobs(jobs: list, config: dict) -> list:
     
     print(f"  Deep researching top {len(top_jobs)} jobs with Sonnet...")
     
-    client = anthropic.Anthropic()
-    
+client = anthropic.Anthropic(
+    max_retries=3,
+)    
     for i, job in enumerate(top_jobs):
         print(f"    Researching {i+1}/{len(top_jobs)}: {job.get('company')} — {job.get('title')}")
         job = research_job(client, job)
