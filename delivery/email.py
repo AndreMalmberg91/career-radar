@@ -52,7 +52,16 @@ def build_email_html(jobs: list, trends: dict, config: dict) -> str:
         research_html = ""
         if research:
             paragraphs = research.strip().split("\n")
-            research_html = "".join(
+            import re
+research_html = research.strip()
+research_html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', research_html)
+research_html = re.sub(r'^## (.*?)$', r'<h4 style="margin:10px 0 4px;color:#111827;font-size:13px;">\1</h4>', research_html, flags=re.MULTILINE)
+research_html = re.sub(r'^### (.*?)$', r'<h5 style="margin:6px 0 2px;color:#374151;font-size:12px;">\1</h5>', research_html, flags=re.MULTILINE)
+research_html = re.sub(r'^- (.*?)$', r'<li style="margin:2px 0;font-size:12px;color:#374151;">\1</li>', research_html, flags=re.MULTILINE)
+research_html = re.sub(r'(<li.*?</li>\n?)+', r'<ul style="margin:4px 0;padding-left:16px;">\g<0></ul>', research_html, flags=re.DOTALL)
+research_html = research_html.replace('\n\n', '</p><p style="margin:6px 0;font-size:12px;color:#374151;">')
+research_html = research_html.replace('\n', '<br>')
+research_html = f'<p style="margin:4px 0;font-size:12px;color:#374151;">{research_html}</p>'
                 f"<p style='margin:4px 0;font-size:13px;color:#374151;'>{p}</p>"
                 for p in paragraphs if p.strip()
             )
