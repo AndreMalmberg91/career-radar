@@ -1,52 +1,57 @@
 import anthropic
+import json
 import time
 import os
 
 
-def research_job(client, job):
-    prompt = f"""Research this job briefly. Use web search. Max 150 words total.
+def score_job(client, job):
+    prompt = f"""Score this job 1-10 for a senior CSM seeking AUD $130K-180K.
 
+Title: {job.get('title')}
 Company: {job.get('company')}
-Role: {job.get('title')}
 Location: {job.get('location')}
+Salary: {job.get('salary_raw', 'Not listed')}
 
-Answer in this exact format:
-STAGE: [funding stage and amount]
-GROWTH: [growing/stable/declining + one reason]
-VERDICT: [Worth it/Caution/Avoid] - [one sentence why]
-SALARY: [estimated AUD base range]
-JOIN: [one reason]
-AVOID: [one reason]"""
+Return ONLY this JSON:
+{{"score": 7, "reason": "one sentence", "company_stage": "startup", "red_flags": "none"}}"""
 
     try:
         response = client.messages.create(
-            model="claude-sonnet-5-5",
-            max_tokens=300,
-            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            model="claude-haiku-4-5",
+            max_tokens=150,
             messages=[{"role": "user", "content": prompt}]
         )
-        text_parts = [block.text for block in response.content if hasattr(block, 'text') and block.text]
-        job["research_summary"] = "\n".join(text_parts) if text_parts else "Research unavailable"
+        text = response.content[0].text.strip()
+        start = text.find('{')
+        end = text.rfind('}') + 1
+        result = json.loads(text[start:end])
+        job["score"] = int(result.get("score", 5))
+        job["score_reason"] = result.get("reason", "")
+        job["company_stage"] = result.get("company_stage", "unknown")
+        job["red_flags"] = result.get("red_flags", "none")
     except Exception as e:
-        print(f"    Research failed for {job.get('company')}: {e}")
-        job["research_summary"] = None
+        print(f"    Scoring failed for {job.get('company')}: {e}")
+        job["score"] = 5
+        job["score_reason"] = "Could not score automatically"
+        job["company_stage"] = "unknown"
+        job["red_flags"] = "none"
     return job
 
 
-def research_top_jobs(jobs, config):
+def score_jobs(jobs, config):
     if not jobs:
         return []
-    max_research = config.get("max_research_roles", 5)
-    top_jobs = jobs[:max_research]
-    rest_jobs = jobs[max_research:]
-    print(f"  Researching top {len(top_jobs)} jobs...")
+    print(f"  Scoring {len(jobs)} jobs with Haiku...")
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     client = anthropic.Anthropic(api_key=api_key)
-    for i, job in enumerate(top_jobs):
-        print(f"    {i+1}/{len(top_jobs)}: {job.get('company')} - {job.get('title')}")
-        job = research_job(client, job)
-        time.sleep(1)
-    for job in rest_jobs:
-        job["research_summary"] = None
-    print(f"  Research complete.")
-    return top_jobs + rest_jobs
+    min_score = config.get("min_score", 5)
+    scored_jobs = []
+    for i, job in enumerate(jobs):
+        print(f"    Scoring {i+1}/{len(jobs)}: {job.get('company')} - {job.get('title')}")
+        job = score_job(client, job)
+        if job["score"] >= min_score:
+            scored_jobs.append(job)
+        time.sleep(0.3)
+    scored_jobs.sort(key=lambda x: x["score"], reverse=True)
+    print(f"  {len(scored_jobs)} jobs scored {min_score}+ (out of {len(jobs)})")
+    return scored_jobs
