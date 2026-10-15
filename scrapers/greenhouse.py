@@ -74,8 +74,8 @@ def scrape_greenhouse_company(company: dict) -> list:
         
         for link in job_links:
             title = link.get_text(strip=True)
-                    if title:
-            title = re.sub(r'New(Melbourne|Sydney|Brisbane|Perth|Adelaide)', r' - \1', title)
+            if title:
+                title = re.sub(r'New(Melbourne|Sydney|Brisbane|Perth|Adelaide)', r' - \1', title)
             href = link.get("href", "")
             
             if not title or not is_relevant_role(title):
