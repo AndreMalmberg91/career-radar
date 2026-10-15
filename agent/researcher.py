@@ -34,8 +34,10 @@ Keep each section concise. If you don't have information, say so."""
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}]
         )
-        job["research_summary"] = response.content[0].text
-    except Exception as e:
+# Sonnet 5.5 may return thinking blocks before text - find the text block
+text_content = next((block.text for block in response.content if hasattr(block, 'text')), None)
+job["research_summary"] = text_content or "Research unavailable"
+except Exception as e:
         print(f"    Research failed for {job.get('company')}: {e}")
         job["research_summary"] = f"Research unavailable: {str(e)}"
     
