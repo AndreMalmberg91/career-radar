@@ -1,18 +1,27 @@
 """
 delivery/email.py — Builds and sends the HTML email report.
-
-Uses Gmail SMTP with an app password (not your regular Gmail password).
-The email is formatted as a clean HTML report with:
-- Market intelligence summary at the top
-- Jobs ranked highest score first
-- Each job shows score, company, role, why it scored that way, apply link
 """
 
 import smtplib
 import os
+import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+
+
+def format_research(research: str) -> str:
+    """Convert markdown research to clean HTML."""
+    if not research:
+        return ""
+    text = research.strip()
+    text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
+    text = re.sub(r'^## (.*?)$', r'<br><strong style="color:#111827;font-size:13px;">\1</strong><br>', text, flags=re.MULTILINE)
+    text = re.sub(r'^### (.*?)$', r'<br><strong style="color:#374151;font-size:12px;">\1</strong><br>', text, flags=re.MULTILINE)
+    text = re.sub(r'^- (.*?)$', r'• \1<br>', text, flags=re.MULTILINE)
+    text = text.replace('\n\n', '<br>')
+    text = text.replace('\n', ' ')
+    return f'<div style="font-size:12px;color:#374151;line-height:1.6;">{text}</div>'
 
 
 def build_email_html(jobs: list, trends: dict, config: dict) -> str:
@@ -21,52 +30,20 @@ def build_email_html(jobs: list, trends: dict, config: dict) -> str:
     now = datetime.now().strftime("%A %d %B %Y")
     total_found = len(jobs)
     
-    # Colour coding for scores
     def score_colour(score):
         if score >= 8:
-            return "#22c55e"  # Green
-        elif score >= 6:
-            return "#f59e0b"  # Amber
-        else:
-            return "#94a3b8"  # Grey
-    
-    def risk_colour(summary):
-        if not summary:
-            return "#94a3b8"
-        summary_lower = summary.lower()
-        if "worth the risk" in summary_lower:
             return "#22c55e"
-        elif "proceed with caution" in summary_lower:
+        elif score >= 6:
             return "#f59e0b"
-        elif "avoid" in summary_lower:
-            return "#ef4444"
-        return "#94a3b8"
+        else:
+            return "#94a3b8"
 
-    # Build job cards HTML
     job_cards = ""
     for i, job in enumerate(jobs):
         score = job.get("score", 0)
         research = job.get("research_summary", "")
         
-        # Format research summary as paragraphs
-        research_html = ""
-        if research:
-            paragraphs = research.strip().split("\n")
-            import re
-research_html = research.strip()
-research_html = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', research_html)
-research_html = re.sub(r'^## (.*?)$', r'<h4 style="margin:10px 0 4px;color:#111827;font-size:13px;">\1</h4>', research_html, flags=re.MULTILINE)
-research_html = re.sub(r'^### (.*?)$', r'<h5 style="margin:6px 0 2px;color:#374151;font-size:12px;">\1</h5>', research_html, flags=re.MULTILINE)
-research_html = re.sub(r'^- (.*?)$', r'<li style="margin:2px 0;font-size:12px;color:#374151;">\1</li>', research_html, flags=re.MULTILINE)
-research_html = re.sub(r'(<li.*?</li>\n?)+', r'<ul style="margin:4px 0;padding-left:16px;">\g<0></ul>', research_html, flags=re.DOTALL)
-research_html = research_html.replace('\n\n', '</p><p style="margin:6px 0;font-size:12px;color:#374151;">')
-research_html = research_html.replace('\n', '<br>')
-research_html = f'<p style="margin:4px 0;font-size:12px;color:#374151;">{research_html}</p>'
-                f"<p style='margin:4px 0;font-size:13px;color:#374151;'>{p}</p>"
-                for p in paragraphs if p.strip()
-            )
-        else:
-            research_html = f"<p style='font-size:13px;color:#6b7280;'>{job.get('score_reason', '')}</p>"
+        research_html = format_research(research) if research else f'<p style="font-size:12px;color:#6b7280;">{job.get("score_reason", "")}</p>'
 
         job_cards += f"""
         <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;
@@ -89,7 +66,9 @@ research_html = f'<p style="margin:4px 0;font-size:12px;color:#374151;">{researc
                 </div>
             </div>
             
-            {f"<div style='background:#f9fafb;border-radius:6px;padding:12px;margin-bottom:12px;'>{research_html}</div>" if research_html else ""}
+            <div style='background:#f9fafb;border-radius:6px;padding:12px;margin-bottom:12px;'>
+                {research_html}
+            </div>
             
             {f"<div style='font-size:12px;color:#ef4444;margin-bottom:8px;'>⚠ {job.get('red_flags')}</div>" if job.get('red_flags') and job.get('red_flags') != 'none' else ""}
             
@@ -104,7 +83,6 @@ research_html = f'<p style="margin:4px 0;font-size:12px;color:#374151;">{researc
         </div>
         """
 
-    # Build market intelligence section
     highlights_html = ""
     if trends.get("highlights"):
         highlights_html = "<ul style='margin:8px 0;padding-left:20px;'>"
@@ -115,11 +93,7 @@ research_html = f'<p style="margin:4px 0;font-size:12px;color:#374151;">{researc
     expansion_html = ""
     if trends.get("expansion_suggestions"):
         roles = ", ".join(trends["expansion_suggestions"])
-        expansion_html = f"""
-        <p style='font-size:13px;color:#6b7280;margin-top:8px;'>
-            💡 <strong>Consider also watching:</strong> {roles}
-        </p>
-        """
+        expansion_html = f'<p style="font-size:13px;color:#6b7280;margin-top:8px;">💡 <strong>Consider also watching:</strong> {roles}</p>'
 
     html = f"""
     <!DOCTYPE html>
@@ -130,23 +104,16 @@ research_html = f'<p style="margin:4px 0;font-size:12px;color:#374151;">{researc
         
         <div style='max-width:680px;margin:0 auto;'>
             
-            <!-- Header -->
-            <div style='background:#1d4ed8;border-radius:8px;padding:24px;
-                        margin-bottom:16px;'>
-                <h1 style='color:#fff;margin:0;font-size:22px;'>
-                    📡 Career Radar
-                </h1>
+            <div style='background:#1d4ed8;border-radius:8px;padding:24px;margin-bottom:16px;'>
+                <h1 style='color:#fff;margin:0;font-size:22px;'>📡 Career Radar</h1>
                 <p style='color:#bfdbfe;margin:4px 0 0;font-size:14px;'>
                     {now} · {total_found} roles found above threshold
                 </p>
             </div>
             
-            <!-- Market Intelligence -->
             <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;
                         padding:20px;margin-bottom:16px;'>
-                <h2 style='margin:0 0 12px;font-size:16px;color:#111827;'>
-                    📊 Market Intelligence
-                </h2>
+                <h2 style='margin:0 0 12px;font-size:16px;color:#111827;'>📊 Market Intelligence</h2>
                 <p style='font-size:14px;color:#374151;margin:0 0 8px;'>
                     <strong>{trends.get('market_health', 'Analysing market...')}</strong>
                 </p>
@@ -154,19 +121,16 @@ research_html = f'<p style="margin:4px 0;font-size:12px;color:#374151;">{researc
                 {expansion_html}
             </div>
             
-            <!-- Jobs -->
             <h2 style='font-size:16px;color:#111827;margin:0 0 12px;'>
                 🎯 Roles Ranked by Fit ({total_found} above threshold)
             </h2>
             
             {job_cards if job_cards else "<p style='color:#6b7280;'>No new roles found this run.</p>"}
             
-            <!-- Footer -->
             <div style='text-align:center;padding:16px;'>
                 <p style='font-size:12px;color:#9ca3af;margin:0;'>
                     Career Radar · Powered by Claude · 
-                    <a href='https://github.com/AndreMalmberg91/career-radar' 
-                       style='color:#9ca3af;'>GitHub</a>
+                    <a href='https://github.com/AndreMalmberg91/career-radar' style='color:#9ca3af;'>GitHub</a>
                 </p>
             </div>
             
@@ -187,12 +151,10 @@ def send_email(jobs: list, trends: dict, config: dict):
     
     if not all([gmail_user, gmail_password, recipient]):
         print("  Email credentials not set — skipping email send.")
-        print("  Set GMAIL_USER, GMAIL_APP_PASSWORD and RECIPIENT_EMAIL in .env")
         return
     
     print(f"  Sending email to {recipient}...")
     
-    # Build email
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"{config.get('email', {}).get('subject', 'Career Radar')} — {len(jobs)} roles"
     msg["From"] = f"{config.get('email', {}).get('from_name', 'Career Radar')} <{gmail_user}>"
@@ -201,7 +163,6 @@ def send_email(jobs: list, trends: dict, config: dict):
     html_content = build_email_html(jobs, trends, config)
     msg.attach(MIMEText(html_content, "html"))
     
-    # Send via Gmail SMTP
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(gmail_user, gmail_password)
