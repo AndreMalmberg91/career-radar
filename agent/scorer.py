@@ -1,71 +1,52 @@
-"""
-agent/scorer.py — Scores each job 1-10 using Claude Haiku.
-"""
-
 import anthropic
-import json
 import time
 import os
 
 
-def score_job(client: anthropic.Anthropic, job: dict) -> dict:
-    """Score a single job 1-10 using Claude Haiku."""
-    
-    prompt = f"""You are a job market analyst. Score this job from 1-10.
+def research_job(client, job):
+    prompt = f"""Research this job briefly. Use web search. Max 150 words total.
 
-Title: {job.get('title', 'Unknown')}
-Company: {job.get('company', 'Unknown')}
-Location: {job.get('location', 'Unknown')}
-Remote: {job.get('is_remote', False)}
-Salary: {job.get('salary_raw', 'Not listed')}
+Company: {job.get('company')}
+Role: {job.get('title')}
+Location: {job.get('location')}
 
-Score based on: company stage/growth, role seniority, AI/tech focus, AUD $130K-180K comp potential.
-
-Respond with JSON only, no other text:
-{{"score": 7, "reason": "one sentence", "company_stage": "startup", "red_flags": "none"}}"""
+Answer in this exact format:
+STAGE: [funding stage and amount]
+GROWTH: [growing/stable/declining + one reason]
+VERDICT: [Worth it/Caution/Avoid] - [one sentence why]
+SALARY: [estimated AUD base range]
+JOIN: [one reason]
+AVOID: [one reason]"""
 
     try:
         response = client.messages.create(
-            model="claude-haiku-4-5",
-            max_tokens=200,
+            model="claude-sonnet-5-5",
+            max_tokens=300,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": prompt}]
         )
-        text = response.content[0].text
-        result = json.loads(text)
-        job["score"] = result.get("score", 5)
-        job["score_reason"] = result.get("reason", "")
-        job["company_stage"] = result.get("company_stage", "unknown")
-        job["red_flags"] = result.get("red_flags", "none")
+        text_parts = [block.text for block in response.content if hasattr(block, 'text') and block.text]
+        job["research_summary"] = "\n".join(text_parts) if text_parts else "Research unavailable"
     except Exception as e:
-        print(f"    Scoring failed for {job.get('company')}: {e}")
-        job["score"] = 5
-        job["score_reason"] = "Could not score automatically"
-        job["company_stage"] = "unknown"
-        job["red_flags"] = "none"
-    
+        print(f"    Research failed for {job.get('company')}: {e}")
+        job["research_summary"] = None
     return job
 
 
-def score_jobs(jobs: list, config: dict) -> list:
-    """Score all jobs using Haiku and return sorted by score."""
+def research_top_jobs(jobs, config):
     if not jobs:
         return []
-    
-    print(f"  Scoring {len(jobs)} jobs with Haiku...")
-    
+    max_research = config.get("max_research_roles", 5)
+    top_jobs = jobs[:max_research]
+    rest_jobs = jobs[max_research:]
+    print(f"  Researching top {len(top_jobs)} jobs...")
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     client = anthropic.Anthropic(api_key=api_key)
-    
-    min_score = config.get("min_score", 5)
-    scored_jobs = []
-    
-    for i, job in enumerate(jobs):
-        print(f"    Scoring {i+1}/{len(jobs)}: {job.get('company')} — {job.get('title')}")
-        job = score_job(client, job)
-        if job["score"] >= min_score:
-            scored_jobs.append(job)
-        time.sleep(0.5)
-    
-    scored_jobs.sort(key=lambda x: x["score"], reverse=True)
-    print(f"  {len(scored_jobs)} jobs scored {min_score}+ (out of {len(jobs)})")
-    return scored_jobs
+    for i, job in enumerate(top_jobs):
+        print(f"    {i+1}/{len(top_jobs)}: {job.get('company')} - {job.get('title')}")
+        job = research_job(client, job)
+        time.sleep(1)
+    for job in rest_jobs:
+        job["research_summary"] = None
+    print(f"  Research complete.")
+    return top_jobs + rest_jobs
