@@ -10,7 +10,7 @@ import os
 def research_job(client: anthropic.Anthropic, job: dict) -> dict:
     """Deep research a single job using Claude Sonnet with web search."""
     
-   prompt = f"""Research this job in 200 words max.
+    prompt = f"""Research this job in 200 words max.
 
 Company: {job.get('company')}
 Role: {job.get('title')}
@@ -26,7 +26,7 @@ Give me:
     try:
         response = client.messages.create(
             model="claude-sonnet-5-5",
-            max_tokens=4000,
+            max_tokens=400,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": prompt}]
         )
