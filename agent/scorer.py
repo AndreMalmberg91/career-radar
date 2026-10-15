@@ -80,9 +80,14 @@ def score_jobs(jobs: list, config: dict) -> list:
     print(f"  Scoring {len(jobs)} jobs with Haiku...")
     
     # Initialise Anthropic client
-    client = anthropic.Anthropic()
-    
-    min_score = config.get("min_score", 5)
+import httpx
+client = anthropic.Anthropic(
+    max_retries=3,
+    http_client=httpx.Client(
+        timeout=httpx.Timeout(60.0, connect=10.0)
+    ),
+)    
+min_score = config.get("min_score", 5)
     scored_jobs = []
     
     for i, job in enumerate(jobs):
