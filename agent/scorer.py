@@ -43,9 +43,12 @@ Respond with JSON only:
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
         )
-text_content = next((block.text for block in response.content if hasattr(block, 'text')), None)
-result = json.loads(text_content)
-job["score"] = result.get("score", 0)
+        text_content = next(
+            (block.text for block in response.content if hasattr(block, 'text')),
+            None
+        )
+        result = json.loads(text_content)
+        job["score"] = result.get("score", 0)
         job["score_reason"] = result.get("reason", "")
         job["company_stage"] = result.get("company_stage", "unknown")
         job["red_flags"] = result.get("red_flags", "none")
