@@ -10,6 +10,7 @@ We search known AU/APAC tech companies that use Greenhouse.
 import requests
 from bs4 import BeautifulSoup
 import time
+import re
 
 
 HEADERS = {
@@ -73,6 +74,8 @@ def scrape_greenhouse_company(company: dict) -> list:
         
         for link in job_links:
             title = link.get_text(strip=True)
+                    if title:
+            title = re.sub(r'New(Melbourne|Sydney|Brisbane|Perth|Adelaide)', r' - \1', title)
             href = link.get("href", "")
             
             if not title or not is_relevant_role(title):
