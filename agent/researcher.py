@@ -1,10 +1,9 @@
 """
 agent/researcher.py — Deep researches top-scoring jobs using Claude Sonnet.
-
-Only runs on the top N jobs (configured in config.yaml) to keep costs low.
 """
 
 import anthropic
+import httpx
 import time
 
 
@@ -24,7 +23,7 @@ Provide a structured analysis covering:
 1. COMPANY OVERVIEW - What they do, stage, funding, revenue, headcount
 2. GROWTH TRAJECTORY - Growing, stable or declining? Key signals and red flags
 3. CAREER RISK VERDICT - Worth the risk / Proceed with caution / Avoid + why
-4. EXPECTED COMPENSATION (AUD) - Estimated base salary range and how you estimated it
+4. EXPECTED COMPENSATION (AUD) - Estimated base salary range
 5. WHY JOIN / WHY AVOID - 2 reasons each
 
 Keep each section concise. If you don't have information, say so."""
@@ -54,13 +53,13 @@ def research_top_jobs(jobs: list, config: dict) -> list:
     
     print(f"  Deep researching top {len(top_jobs)} jobs with Sonnet...")
     
-import httpx
-client = anthropic.Anthropic(
-    max_retries=3,
-    http_client=httpx.Client(
-        timeout=httpx.Timeout(60.0, connect=10.0)
-    ),
-)    
+    client = anthropic.Anthropic(
+        max_retries=3,
+        http_client=httpx.Client(
+            timeout=httpx.Timeout(60.0, connect=10.0)
+        ),
+    )
+    
     for i, job in enumerate(top_jobs):
         print(f"    Researching {i+1}/{len(top_jobs)}: {job.get('company')} — {job.get('title')}")
         job = research_job(client, job)
