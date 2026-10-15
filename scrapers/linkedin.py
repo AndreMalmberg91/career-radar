@@ -19,7 +19,6 @@ def scrape_linkedin(config: dict) -> list:
 
     all_jobs = []
     
-    # Search queries using correct input format
     queries = [
         {"keywords": "Customer Success Manager", "location": "Sydney, Australia"},
         {"keywords": "Senior Customer Success Manager", "location": "Sydney, Australia"},
@@ -29,7 +28,7 @@ def scrape_linkedin(config: dict) -> list:
 
     for query in queries:
         try:
-            print(f"    LinkedIn: searching '{query['keywords']}' in {query['location']}")
+            print(f"    LinkedIn: '{query['keywords']}' in {query['location']}")
             
             run_response = requests.post(
                 f"{APIFY_BASE_URL}/acts/{ACTOR_ID}/runs",
@@ -37,8 +36,9 @@ def scrape_linkedin(config: dict) -> list:
                 json={
                     "keywords": query["keywords"],
                     "location": query["location"],
-                    "datePosted": "past week",
-                    "limit": 15
+                    "datePosted": "pastWeek",
+                    "limitPerSource": 10,
+                    "scrapeCompany": False
                 },
                 timeout=30
             )
@@ -51,7 +51,6 @@ def scrape_linkedin(config: dict) -> list:
             if not run_id:
                 continue
 
-            # Wait for completion
             for _ in range(18):
                 time.sleep(10)
                 status_resp = requests.get(
@@ -60,6 +59,7 @@ def scrape_linkedin(config: dict) -> list:
                     timeout=15
                 )
                 status = status_resp.json().get("data", {}).get("status")
+                print(f"    LinkedIn status: {status}")
                 if status == "SUCCEEDED":
                     break
                 elif status in ["FAILED", "ABORTED", "TIMED-OUT"]:
@@ -72,7 +72,7 @@ def scrape_linkedin(config: dict) -> list:
             results = requests.get(
                 f"{APIFY_BASE_URL}/datasets/{dataset_id}/items",
                 headers={"Authorization": f"Bearer {api_token}"},
-                params={"format": "json", "limit": 20},
+                params={"format": "json", "limit": 15},
                 timeout=30
             ).json()
 
