@@ -1,0 +1,29 @@
+# Anthropic API client
+anthropic>=0.40.0
+
+# Web scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Configuration
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
+
+# Database
+# SQLite is built into Python — no package needed
+
+# Email
+# smtplib is built into Python — no package needed
+
+# Scheduling (for local testing)
+schedule>=1.2.0
+
+# HTML generation
+jinja2>=3.1.2
+
+# Date handling
+python-dateutil>=2.8.2
+
+# Rate limiting for scrapers
+tenacity>=8.2.3

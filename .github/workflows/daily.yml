@@ -1,0 +1,48 @@
+# .github/workflows/daily.yml
+# Runs Career Radar every Monday, Wednesday and Friday at 7am Sydney time
+# Sends the report to your email automatically
+
+name: Career Radar — Job Search
+
+on:
+  schedule:
+    # 7am AEST (UTC+10) = 9pm UTC previous day
+    # Runs Monday, Wednesday, Friday
+    - cron: '0 21 * * 0'  # Sunday 9pm UTC = Monday 7am Sydney
+    - cron: '0 21 * * 2'  # Tuesday 9pm UTC = Wednesday 7am Sydney
+    - cron: '0 21 * * 4'  # Thursday 9pm UTC = Friday 7am Sydney
+  
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  run-career-radar:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Career Radar
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: python main.py --send-email
+
+      - name: Upload HTML report as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: career-radar-report
+          path: reports/
+          retention-days: 14

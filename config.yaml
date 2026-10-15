@@ -1,0 +1,40 @@
+# Career Radar Configuration
+# Edit this file to customise the agent for your job search
+
+# Job titles to search for (add or remove as needed)
+job_titles:
+  - "Customer Success Manager"
+  - "Senior Customer Success Manager"
+  - "Enterprise Customer Success Manager"
+  - "Account Manager"
+  - "Customer Success Lead"
+  - "Founding Customer Success Manager"
+
+# Location settings
+locations:
+  # For in-office and hybrid roles
+  onsite:
+    - "Sydney"
+    - "Sydney CBD"
+  # For remote roles (searches these regions)
+  remote:
+    - "APAC"
+    - "Australia"
+    - "Remote"
+
+# Minimum score threshold (1-10) — roles below this are dropped
+min_score: 5
+
+# How many top roles to deep research with Sonnet (costs more)
+max_research_roles: 5
+
+# Email settings (set actual values in .env file)
+email:
+  subject: "Career Radar — Job Market Report"
+  from_name: "Career Radar"
+
+# Database settings
+database:
+  path: "database/jobs.db"
+  # How many days of history to use for trend analysis
+  trend_window_days: 14

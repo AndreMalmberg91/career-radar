@@ -1,0 +1,25 @@
+# Environment variables — never commit these
+.env
+
+# Database — contains your personal job search history
+database/jobs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.egg
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+logs/
