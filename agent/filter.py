@@ -71,6 +71,16 @@ def matches_location(job: dict) -> tuple[bool, bool]:
     location = job.get("location", "").lower()
     description = job.get("description", "").lower()
     combined = f"{location} {description}"
+        # Exclude roles with non-Australian cities in the job title
+    title = job.get("title", "").lower()
+    non_au_cities = [
+        "new york", "chicago", "austin", "london", "berlin",
+        "san francisco", "los angeles", "toronto", "amsterdam",
+        "paris", "dublin", "seattle", "boston", "denver",
+        "frankfurt", "french-speaking", "dutch", "german-speaking"
+    ]
+    if any(city in title for city in non_au_cities):
+        return False, False
 
     # Must explicitly mention Australia or remote to be included
     australia_signals = [
