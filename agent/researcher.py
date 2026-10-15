@@ -29,6 +29,12 @@ Use web search to find real current data. Be specific with numbers and dates."""
 
     try:
         response = client.messages.create(
+    model="claude-sonnet-5-5",
+    max_tokens=2000,
+    thinking={"type": "disabled"},
+    tools=[{"type": "web_search_20250305", "name": "web_search"}],
+    messages=[{"role": "user", "content": prompt}]
+)(
             model="claude-sonnet-5-5",
             max_tokens=2000,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],

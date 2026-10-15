@@ -39,6 +39,12 @@ Respond with JSON only:
 
     try:
         response = client.messages.create(
+    model="claude-haiku-5-5",
+    max_tokens=200,
+    thinking={"type": "disabled"},
+    messages=[{"role": "user", "content": prompt}]
+)
+result = json.loads(response.content[0].text)
             model="claude-haiku-5-5",
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
