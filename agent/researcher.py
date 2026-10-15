@@ -10,19 +10,18 @@ import os
 def research_job(client: anthropic.Anthropic, job: dict) -> dict:
     """Deep research a single job using Claude Sonnet with web search."""
     
-    prompt = f"""Research this company and job using web search. Find current real data.
+   prompt = f"""Research this job in 200 words max.
 
 Company: {job.get('company')}
 Role: {job.get('title')}
 Location: {job.get('location')}
-Salary listed: {job.get('salary_raw', 'Not listed')}
 
-Search and provide:
-1. COMPANY OVERVIEW - What they do, stage, funding, revenue, headcount
-2. GROWTH TRAJECTORY - Growing or declining? Recent news
-3. CAREER RISK VERDICT - Worth the risk / Proceed with caution / Avoid + why
-4. EXPECTED COMPENSATION (AUD) - Current market rate for this role in Australia
-5. WHY JOIN / WHY AVOID - 2 concrete reasons each"""
+Give me:
+- Company stage and funding (1 line)
+- Growth: growing/stable/declining (1 line)
+- Risk verdict: Worth it / Caution / Avoid (1 line + reason)
+- Salary estimate AUD (1 line)
+- One reason to join, one reason to avoid"""
 
     try:
         response = client.messages.create(
