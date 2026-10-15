@@ -3,8 +3,8 @@ agent/researcher.py — Deep researches top-scoring jobs using Claude Sonnet.
 """
 
 import anthropic
-import httpx
 import time
+import os
 
 
 def research_job(client: anthropic.Anthropic, job: dict) -> dict:
@@ -53,12 +53,8 @@ def research_top_jobs(jobs: list, config: dict) -> list:
     
     print(f"  Deep researching top {len(top_jobs)} jobs with Sonnet...")
     
-    client = anthropic.Anthropic(
-        max_retries=3,
-        http_client=httpx.Client(
-            timeout=httpx.Timeout(60.0, connect=10.0)
-        ),
-    )
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    client = anthropic.Anthropic(api_key=api_key)
     
     for i, job in enumerate(top_jobs):
         print(f"    Researching {i+1}/{len(top_jobs)}: {job.get('company')} — {job.get('title')}")

@@ -3,9 +3,9 @@ agent/scorer.py — Scores each job 1-10 using Claude Haiku.
 """
 
 import anthropic
-import httpx
 import json
 import time
+import os
 
 
 def score_job(client: anthropic.Anthropic, job: dict) -> dict:
@@ -65,12 +65,8 @@ def score_jobs(jobs: list, config: dict) -> list:
     
     print(f"  Scoring {len(jobs)} jobs with Haiku...")
     
-    client = anthropic.Anthropic(
-        max_retries=3,
-        http_client=httpx.Client(
-            timeout=httpx.Timeout(60.0, connect=10.0)
-        ),
-    )
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    client = anthropic.Anthropic(api_key=api_key)
     
     min_score = config.get("min_score", 5)
     scored_jobs = []
