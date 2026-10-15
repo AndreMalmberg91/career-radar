@@ -35,6 +35,7 @@ NEGATIVE_KEYWORDS = [
 
 # Sydney location signals
 SYDNEY_KEYWORDS = ["sydney", "nsw", "new south wales"]
+EXCLUDE_LOCATIONS = ["melbourne", "brisbane", "perth", "adelaide", "new york", "chicago", "austin", "london", "berlin", "san francisco", "los angeles", "toronto", "singapore", "hong kong", "us", "usa", "united states"]
 
 # Remote/APAC signals
 REMOTE_KEYWORDS = ["remote", "apac", "australia", "anywhere"]
@@ -73,17 +74,21 @@ def matches_location(job: dict) -> tuple[bool, bool]:
     
     combined = f"{location} {title} {description}"
     
+    # Hard exclude non-Sydney, non-APAC locations
+    for exclude in EXCLUDE_LOCATIONS:
+        if exclude in location:
+            return False, False
+    
     # Check for Sydney onsite/hybrid
     is_sydney = any(kw in combined for kw in SYDNEY_KEYWORDS)
     
     # Check for remote/APAC
     is_remote = any(kw in combined for kw in REMOTE_KEYWORDS)
     
-    # Accept if Sydney-based or remote
+    # Must explicitly match Sydney or remote — not just "Australia" alone
     matches = is_sydney or is_remote
     
     return matches, is_remote
-
 
 def deduplicate(jobs: list) -> list:
     """Remove duplicate jobs based on company + title combination."""

@@ -55,7 +55,7 @@ If you don't have information, say so rather than guessing."""
 
     try:
         response = client.messages.create(
-            model="claude-sonnet-5-5",
+            model="claude-sonnet-5-5-20251022",
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}]
         )
