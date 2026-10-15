@@ -30,6 +30,7 @@ load_dotenv()
 # Import all modules
 from database.storage import init_database, save_run, save_job
 from scrapers.seek import scrape_seek
+from scrapers.adzuna import scrape_adzuna
 from scrapers.indeed import scrape_indeed
 from scrapers.wellfound import scrape_wellfound
 from scrapers.greenhouse import scrape_greenhouse
@@ -92,6 +93,7 @@ def run_scrapers(config: dict, test_mode: bool = False) -> list:
         ]
 
     scrapers = [
+        ("Adzuna", scrape_adzuna),
         ("Seek", scrape_seek),
         ("Indeed", scrape_indeed),
         ("Wellfound", scrape_wellfound),
