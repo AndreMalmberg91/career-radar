@@ -11,50 +11,28 @@ import os
 def score_job(client: anthropic.Anthropic, job: dict) -> dict:
     """Score a single job 1-10 using Claude Haiku."""
     
-    prompt = f"""You are a job market analyst helping a senior Customer Success Manager 
-with 7+ years experience evaluate job opportunities.
+    prompt = f"""You are a job market analyst. Score this job from 1-10.
 
-Score this job from 1-10 based on:
-- Company stage and growth (prefer Series A-D startups and scaleups)
-- Role seniority and scope
-- Whether it's an AI-native or tech-forward company
-- Compensation potential (prefer AUD $130K-180K base)
-- Career trajectory value
-
-Job details:
 Title: {job.get('title', 'Unknown')}
 Company: {job.get('company', 'Unknown')}
 Location: {job.get('location', 'Unknown')}
-Source: {job.get('source', 'Unknown')}
 Remote: {job.get('is_remote', False)}
-Salary info: {job.get('salary_raw', 'Not listed')}
+Salary: {job.get('salary_raw', 'Not listed')}
 
-Respond with JSON only:
-{{
-  "score": <integer 1-10>,
-  "reason": "<one sentence explaining the score>",
-  "company_stage": "<startup/scaleup/enterprise/unknown>",
-  "red_flags": "<any concerns, or none>"
-}}"""
+Score based on: company stage/growth, role seniority, AI/tech focus, AUD $130K-180K comp potential.
+
+Respond with JSON only, no other text:
+{{"score": 7, "reason": "one sentence", "company_stage": "startup", "red_flags": "none"}}"""
 
     try:
         response = client.messages.create(
-    model="claude-haiku-5-5",
-    max_tokens=200,
-    thinking={"type": "disabled"},
-    messages=[{"role": "user", "content": prompt}]
-)
-result = json.loads(response.content[0].text)
             model="claude-haiku-5-5",
             max_tokens=200,
             messages=[{"role": "user", "content": prompt}]
         )
-        text_content = next(
-            (block.text for block in response.content if hasattr(block, 'text')),
-            None
-        )
-        result = json.loads(text_content)
-        job["score"] = result.get("score", 0)
+        text = response.content[0].text
+        result = json.loads(text)
+        job["score"] = result.get("score", 5)
         job["score_reason"] = result.get("reason", "")
         job["company_stage"] = result.get("company_stage", "unknown")
         job["red_flags"] = result.get("red_flags", "none")
