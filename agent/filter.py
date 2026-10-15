@@ -35,7 +35,6 @@ NEGATIVE_KEYWORDS = [
 
 # Sydney location signals
 SYDNEY_KEYWORDS = ["sydney", "nsw", "new south wales"]
-EXCLUDE_LOCATIONS = ["melbourne", "brisbane", "perth", "adelaide", "new york", "chicago", "austin", "london", "berlin", "san francisco", "los angeles", "toronto", "singapore", "hong kong", "us", "usa", "united states"]
 
 # Remote/APAC signals
 REMOTE_KEYWORDS = ["remote", "apac", "australia", "anywhere"]
@@ -66,28 +65,36 @@ def matches_title(job: dict, config: dict) -> bool:
 def matches_location(job: dict) -> tuple[bool, bool]:
     """
     Check if job matches location requirements.
+    Only accepts roles explicitly in Australia/Sydney or explicitly remote.
     Returns (matches, is_remote) tuple.
     """
     location = job.get("location", "").lower()
-    title = job.get("title", "").lower()
     description = job.get("description", "").lower()
-    
-    combined = f"{location} {title} {description}"
-    
-    # Hard exclude non-Sydney, non-APAC locations
-    for exclude in EXCLUDE_LOCATIONS:
-        if exclude in location:
-            return False, False
-    
-    # Check for Sydney onsite/hybrid
-    is_sydney = any(kw in combined for kw in SYDNEY_KEYWORDS)
-    
-    # Check for remote/APAC
-    is_remote = any(kw in combined for kw in REMOTE_KEYWORDS)
-    
-    # Must explicitly match Sydney or remote — not just "Australia" alone
+    combined = f"{location} {description}"
+
+    # Must explicitly mention Australia or remote to be included
+    australia_signals = [
+        "sydney", "nsw", "new south wales",
+        "melbourne", "victoria", "brisbane", "queensland",
+        "perth", "western australia", "adelaide", "south australia",
+        "australia", "au", "canberra", "act"
+    ]
+
+    remote_signals = [
+        "remote - australia", "remote australia",
+        "apac remote", "remote apac",
+        "anywhere in australia", "australia (remote)",
+        "remote (australia)"
+    ]
+
+    is_sydney = any(kw in location for kw in australia_signals)
+    is_remote = any(kw in combined for kw in remote_signals)
+
+    # If location is empty or just says "remote" with no region — skip it
+    if not location or location.strip() in ["remote", "anywhere", ""]:
+        return False, False
+
     matches = is_sydney or is_remote
-    
     return matches, is_remote
 
 def deduplicate(jobs: list) -> list:
