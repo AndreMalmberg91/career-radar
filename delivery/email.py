@@ -16,6 +16,7 @@ def format_research(research: str) -> str:
         return ""
     text = research.strip()
     text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
+    text = re.sub(r'(SALARY:.*?)(<br>|$)', r'<strong>\1</strong>\2', text)
     text = re.sub(r'^## (.*?)$', r'<br><strong style="color:#111827;font-size:13px;">\1</strong><br>', text, flags=re.MULTILINE)
     text = re.sub(r'^### (.*?)$', r'<br><strong style="color:#374151;font-size:12px;">\1</strong><br>', text, flags=re.MULTILINE)
     text = re.sub(r'^- (.*?)$', r'• \1<br>', text, flags=re.MULTILINE)
