@@ -8,10 +8,9 @@ on:
   schedule:
     # 7am AEST (UTC+10) = 9pm UTC previous day
     # Runs Monday, Wednesday, Friday
-    - cron: '0 21 * * 0'  # Sunday 9pm UTC = Monday 7am Sydney
-    - cron: '0 21 * * 2'  # Tuesday 9pm UTC = Wednesday 7am Sydney
-    - cron: '0 21 * * 4'  # Thursday 9pm UTC = Friday 7am Sydney
-  
+      schedule:
+    - cron: '0 20 * * 1'  # Monday 6am UTC = Tuesday 7am AEDT (UTC+11)
+    - cron: '0 20 * * 3'  # Wednesday 6am UTC = Thursday 7am AEDT (UTC+11)
   # Allow manual trigger from GitHub Actions tab
   workflow_dispatch:
 

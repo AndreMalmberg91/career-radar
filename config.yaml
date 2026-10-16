@@ -23,10 +23,10 @@ locations:
     - "Remote"
 
 # Minimum score threshold (1-10) — roles below this are dropped
-min_score: 5
+min_score: 3
 
-# How many top roles to deep research with Sonnet (costs more)
-max_research_roles: 5
+# How many roles to research with Haiku (all jobs)
+max_research_roles: 30
 
 # Email settings (set actual values in .env file)
 email:
