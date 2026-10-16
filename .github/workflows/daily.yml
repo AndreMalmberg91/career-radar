@@ -6,9 +6,6 @@ name: Career Radar — Job Search
 
 on:
   schedule:
-    # 7am AEST (UTC+10) = 9pm UTC previous day
-    # Runs Monday, Wednesday, Friday
-      schedule:
     - cron: '0 20 * * 1'  # Monday 6am UTC = Tuesday 7am AEDT (UTC+11)
     - cron: '0 20 * * 3'  # Wednesday 6am UTC = Thursday 7am AEDT (UTC+11)
   # Allow manual trigger from GitHub Actions tab
