@@ -148,7 +148,7 @@ def get_runs_since(db_path: str, days: int) -> list:
     return runs
 
 
-def get_seen_jobs(db_path: str, days: int = 3) -> set:
+def get_seen_jobs(db_path: str, days: int = 14) -> set:
     """
     Get set of (company, title) tuples seen recently.
     Used to avoid showing the same job twice in consecutive runs.

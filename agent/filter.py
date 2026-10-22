@@ -127,7 +127,7 @@ def deduplicate(jobs: list) -> list:
 
 def remove_recently_seen(jobs: list, db_path: str) -> list:
     """Remove jobs we've already shown in recent runs."""
-    seen_jobs = get_seen_jobs(db_path, days=3)
+    seen_jobs = get_seen_jobs(db_path, days=14)
     
     new_jobs = []
     for job in jobs:
